@@ -2,6 +2,10 @@
 
 macOS menu bar app for [ecsctl](https://github.com/oablab/ecsctl) — live `ecsctl get --all` in your menu bar, with click-to-operate controls for the ECS Fargate fleet.
 
+![Services view — live fleet table with per-column actions](screenshots/shot1-services.png)
+
+![Groups view — alias groups with bulk start/stop](screenshots/shot2-groups.png)
+
 ## Features
 
 ### Services view (`$ ecsctl get --all`)
