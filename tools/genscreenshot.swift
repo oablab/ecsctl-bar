@@ -315,13 +315,13 @@ func render(_ view: some View, to path: String) {
 
 await MainActor.run {
     render(Shot(p: githubdark,
-                headline: "你的 ECS fleet\n就在 menu bar",
-                sub: "ecsctl get --all 即時表格\n5 秒自動刷新\n點 STATUS 直接 start / stop / restart\n點 CAPACITY 切換 FARGATE / SPOT\n點 IMAGE 就地更新 image URI",
+                headline: "Your ECS fleet,\nright in the menu bar",
+                sub: "Live ecsctl get --all table\nAuto-refresh every 5 s\nClick STATUS to start / stop / restart\nClick CAPACITY to switch FARGATE / SPOT\nClick IMAGE to update the image URI in place",
                 window: ServicesShot(header: header, rows: rows, p: githubdark, highlightRow: 7)),
            to: "\(outDir)/shot1-services.png")
     render(Shot(p: bluedolphin,
-                headline: "Alias groups\n一鍵批次操作",
-                sub: "讀取 ~/.ecsctl/config.toml 的 [groups]\n即時彙總 RUNNING 狀態\nhover 出現 ▶ start / ■ stop\n批次停止需二次確認",
+                headline: "Alias groups,\nbulk operations",
+                sub: "Reads [groups] from ~/.ecsctl/config.toml\nLive aggregate RUNNING status\nHover for ▶ start / ■ stop\nBulk stop requires confirmation",
                 window: GroupsShot(groups: groups, running: running, p: bluedolphin, hoverIndex: 1)),
            to: "\(outDir)/shot2-groups.png")
 }

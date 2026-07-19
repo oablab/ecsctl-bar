@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>ecsctl Bar</string>
+    <string>ecsctl-bar</string>
     <key>CFBundleDisplayName</key>
-    <string>ecsctl Bar</string>
+    <string>ecsctl-bar</string>
     <key>CFBundleIdentifier</key>
     <string>dev.pahud.ecsctl-bar</string>
     <key>CFBundleExecutable</key>
-    <string>EcsctlBar</string>
+    <string>ecsctl-bar</string>
     <key>CFBundleVersion</key>
     <string>0.1.0</string>
     <key>CFBundleShortVersionString</key>

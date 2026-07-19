@@ -7,11 +7,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP="ecsctl Bar.app"
-BIN="EcsctlBar"
+APP="ecsctl-bar.app"
+BIN="ecsctl-bar"
 CERT="Developer ID Application: Hung-En Hsieh (UM92U863A8)"
 VERSION=$(defaults read "$PWD/Info.plist" CFBundleShortVersionString)
-ZIP="ecsctl-Bar-$VERSION-devid.zip"
+ZIP="ecsctl-bar-$VERSION-devid.zip"
 
 echo "==> compiling (arm64 + x86_64 universal)..."
 swiftc -O -parse-as-library -target arm64-apple-macosx13.0  Sources/main.swift -o "$BIN.arm64"

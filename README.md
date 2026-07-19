@@ -1,4 +1,4 @@
-# ecsctl Bar
+# ecsctl-bar
 
 macOS menu bar app for [ecsctl](https://github.com/oablab/ecsctl) — live `ecsctl get --all` in your menu bar, with click-to-operate controls for the ECS Fargate fleet.
 
@@ -41,8 +41,8 @@ macOS menu bar app for [ecsctl](https://github.com/oablab/ecsctl) — live `ecsc
 
 ```bash
 ./build.sh
-cp -R "ecsctl Bar.app" /Applications/
-open "/Applications/ecsctl Bar.app"
+cp -R "ecsctl-bar.app" /Applications/
+open "/Applications/ecsctl-bar.app"
 ```
 
 The app is ad-hoc signed — fine for personal use, needs Developer ID + notarization for distribution.

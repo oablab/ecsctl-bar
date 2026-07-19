@@ -3,8 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP="ecsctl Bar.app"
-BIN="EcsctlBar"
+APP="ecsctl-bar.app"
+BIN="ecsctl-bar"
 
 echo "==> compiling..."
 swiftc -O -parse-as-library \
