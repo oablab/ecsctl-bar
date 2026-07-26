@@ -234,9 +234,13 @@ final class EcsStore: ObservableObject {
     static let interval: TimeInterval = 5
 
     nonisolated static var binary: String {
-        // MAS/sandbox: prefer an ecsctl bundled inside the app
         let bundled = Bundle.main.bundleURL
             .appendingPathComponent("Contents/Helpers/ecsctl").path
+        // Sandboxed (MAS) build: bundled helper ONLY — never probe external
+        // paths (App Review guideline 2.4.5: no external/downloaded code).
+        if ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil {
+            return bundled
+        }
         let candidates = [
             bundled,
             NSHomeDirectory() + "/.local/bin/ecsctl",

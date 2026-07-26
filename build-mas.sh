@@ -33,17 +33,60 @@ cp Info.plist "$APP/Contents/"
 cp AppIcon.icns "$APP/Contents/Resources/" 2>/dev/null || true
 
 echo "==> signing helper (sandbox inherit)..."
-codesign --force -s - \
+codesign --force -s "${SIGN_APP_ID:--}" \
   --entitlements entitlements-inherit.plist \
   "$APP/Contents/Helpers/ecsctl"
 
-echo "==> signing app (app-sandbox + network.client + user-selected files)..."
-codesign --force -s - \
-  --entitlements entitlements-mas.plist \
-  "$APP"
+if [ -n "${PROFILE:-}" ]; then
+  # ---- Real MAS signing (requires the App Store provisioning profile) ----
+  # PROFILE=path/to/ecsctl_appstore.provisionprofile
+  # SIGN_APP_ID default: Apple Distribution; SIGN_PKG_ID: installer identity
+  SIGN_APP_ID="${SIGN_APP_ID:-Apple Distribution: Hsieh Hong En (UM92U863A8)}"
+  SIGN_PKG_ID="${SIGN_PKG_ID:-3rd Party Mac Developer Installer: Hsieh Hong En (UM92U863A8)}"
+  TEAM_ID="UM92U863A8"
+  BUNDLE_ID="dev.pahud.ecsctl-bar"
 
-echo "==> verify entitlements:"
-codesign -d --entitlements - "$APP" 2>/dev/null | grep -E "app-sandbox|network.client|user-selected" || true
+  echo "==> embedding provisioning profile..."
+  cp "$PROFILE" "$APP/Contents/embedded.provisionprofile"
+
+  echo "==> generating distribution entitlements..."
+  cat > /tmp/entitlements-mas-dist.plist <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.app-sandbox</key><true/>
+    <key>com.apple.security.network.client</key><true/>
+    <key>com.apple.security.files.user-selected.read-only</key><true/>
+    <key>com.apple.security.files.bookmarks.app-scope</key><true/>
+    <key>com.apple.application-identifier</key><string>$TEAM_ID.$BUNDLE_ID</string>
+    <key>com.apple.developer.team-identifier</key><string>$TEAM_ID</string>
+</dict>
+</plist>
+EOF
+
+  echo "==> re-signing helper + app with $SIGN_APP_ID..."
+  codesign --force --timestamp -s "$SIGN_APP_ID" \
+    --entitlements entitlements-inherit.plist \
+    "$APP/Contents/Helpers/ecsctl"
+  codesign --force --timestamp -s "$SIGN_APP_ID" \
+    --entitlements /tmp/entitlements-mas-dist.plist \
+    "$APP"
+  rm /tmp/entitlements-mas-dist.plist
+
+  echo "==> building installer pkg..."
+  productbuild --component "$APP" /Applications \
+    --sign "$SIGN_PKG_ID" "ecsctl-mas.pkg"
+  echo "==> done: $PWD/ecsctl-mas.pkg (upload via foldic asc_upload.py)"
+else
+  echo "==> signing app (ad-hoc, sandbox enforced — local prototype)..."
+  codesign --force -s - \
+    --entitlements entitlements-mas.plist \
+    "$APP"
+
+  echo "==> verify entitlements:"
+  codesign -d --entitlements - "$APP" 2>/dev/null | grep -E "app-sandbox|network.client|user-selected" || true
+fi
 
 echo "==> done: $PWD/$APP"
 echo "    run: open \"$APP\"   (container: ~/Library/Containers/dev.pahud.ecsctl-bar)"
