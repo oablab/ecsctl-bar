@@ -77,10 +77,10 @@ Findings:
 
 ## Monetization — $0.99/month auto-renewable subscription (implemented 2026-07-25)
 
-- `Sources/Subscription.swift`: StoreKit 2. Product id **`dev.pahud.ecsctlbar.monthly`**.
+- `Sources/Subscription.swift`: StoreKit 2. Product id **`dev.pahud.ecsctl.monthly`**.
 - Gating: only when `APP_SANDBOX_CONTAINER_ID` is present (MAS build) — source/Developer
   ID builds are never gated. Dev bypass for prototyping:
-  `defaults write dev.pahud.ecsctl-bar devBypassPaywall -bool true`
+  `defaults write dev.pahud.ecsctl devBypassPaywall -bool true`
 - Paywall (verified via screenshot 2026-07-25): feature list, Subscribe (price from
   `product.displayPrice`), Restore Purchases, Privacy Policy (PRIVACY.md) + Apple
   standard EULA links, auto-renew disclosure. Degrades gracefully when the ASC product
@@ -102,10 +102,10 @@ The inherit-entitled helper crashes if run standalone (needs a sandboxed parent)
 
 ### App Store Connect setup (manual, one-time)
 
-1. New app record: bundle id `dev.pahud.ecsctl-bar`, name **ecsctl**, category Developer Tools
+1. New app record: bundle id `dev.pahud.ecsctl`, name **ecsctl**, category Developer Tools
    (Paid Apps agreement already Active from foldic)
 2. Subscription group → auto-renewable subscription:
-   - Product ID: `dev.pahud.ecsctlbar.monthly` (must match `SubscriptionManager.productID`)
+   - Product ID: `dev.pahud.ecsctl.monthly` (must match `SubscriptionManager.productID`)
    - $0.99/month (Tier 1); localized display name + description
 3. App Privacy: "Data Not Collected" (matches PRIVACY.md)
 4. Review notes: "click Try Demo Fleet — no AWS account needed" + sandbox purchase test

@@ -5,7 +5,7 @@ import Security
 
 /// Minimal Keychain wrapper for persisting the SSO session across launches.
 enum Keychain {
-    private static let service = "dev.pahud.ecsctl-bar.sso"
+    private static let service = "dev.pahud.ecsctl.sso"
 
     static func save(_ data: Data, account: String) {
         let query: [String: Any] = [

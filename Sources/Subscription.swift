@@ -12,11 +12,11 @@ final class SubscriptionManager: ObservableObject {
 
     /// Auto-renewable subscription product (configure in App Store Connect
     /// with this exact id, $0.99/month).
-    static let productID = "dev.pahud.ecsctlbar.monthly"
+    static let productID = "dev.pahud.ecsctl.monthly"
 
     /// Only the sandboxed (MAS) build requires a subscription.
     /// Dev escape hatch for prototype testing before the ASC product exists:
-    /// `defaults write dev.pahud.ecsctl-bar devBypassPaywall -bool true`
+    /// `defaults write dev.pahud.ecsctl devBypassPaywall -bool true`
     static let gatingRequired =
         ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
         && !UserDefaults.standard.bool(forKey: "devBypassPaywall")

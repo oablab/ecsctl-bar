@@ -27,7 +27,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Helpers" "$APP/Contents/Resources"
 mv "$BIN" "$APP/Contents/MacOS/"
 cp "$ECSCTL" "$APP/Contents/Helpers/ecsctl"
 cp Info.plist "$APP/Contents/"
-# MAS product name is "ecsctl" (bundle id stays dev.pahud.ecsctl-bar)
+# MAS product name is "ecsctl" (bundle id stays dev.pahud.ecsctl)
 /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ecsctl" \
                         -c "Set :CFBundleName ecsctl" "$APP/Contents/Info.plist"
 cp AppIcon.icns "$APP/Contents/Resources/" 2>/dev/null || true
@@ -44,7 +44,7 @@ if [ -n "${PROFILE:-}" ]; then
   SIGN_APP_ID="${SIGN_APP_ID:-Apple Distribution: Hsieh Hong En (UM92U863A8)}"
   SIGN_PKG_ID="${SIGN_PKG_ID:-3rd Party Mac Developer Installer: Hsieh Hong En (UM92U863A8)}"
   TEAM_ID="UM92U863A8"
-  BUNDLE_ID="dev.pahud.ecsctl-bar"
+  BUNDLE_ID="dev.pahud.ecsctl"
 
   echo "==> embedding provisioning profile..."
   cp "$PROFILE" "$APP/Contents/embedded.provisionprofile"
@@ -89,4 +89,4 @@ else
 fi
 
 echo "==> done: $PWD/$APP"
-echo "    run: open \"$APP\"   (container: ~/Library/Containers/dev.pahud.ecsctl-bar)"
+echo "    run: open \"$APP\"   (container: ~/Library/Containers/dev.pahud.ecsctl)"

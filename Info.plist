@@ -7,7 +7,7 @@
     <key>CFBundleDisplayName</key>
     <string>ecsctl-bar</string>
     <key>CFBundleIdentifier</key>
-    <string>dev.pahud.ecsctl-bar</string>
+    <string>dev.pahud.ecsctl</string>
     <key>CFBundleExecutable</key>
     <string>ecsctl-bar</string>
     <key>CFBundleVersion</key>
