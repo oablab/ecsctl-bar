@@ -27,6 +27,9 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Helpers" "$APP/Contents/Resources"
 mv "$BIN" "$APP/Contents/MacOS/"
 cp "$ECSCTL" "$APP/Contents/Helpers/ecsctl"
 cp Info.plist "$APP/Contents/"
+# MAS product name is "ecsctl" (bundle id stays dev.pahud.ecsctl-bar)
+/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName ecsctl" \
+                        -c "Set :CFBundleName ecsctl" "$APP/Contents/Info.plist"
 cp AppIcon.icns "$APP/Contents/Resources/" 2>/dev/null || true
 
 echo "==> signing helper (sandbox inherit)..."

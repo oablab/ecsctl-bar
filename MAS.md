@@ -102,7 +102,7 @@ The inherit-entitled helper crashes if run standalone (needs a sandboxed parent)
 
 ### App Store Connect setup (manual, one-time)
 
-1. New app record: bundle id `dev.pahud.ecsctl-bar`, category Developer Tools
+1. New app record: bundle id `dev.pahud.ecsctl-bar`, name **ecsctl**, category Developer Tools
    (Paid Apps agreement already Active from foldic)
 2. Subscription group → auto-renewable subscription:
    - Product ID: `dev.pahud.ecsctlbar.monthly` (must match `SubscriptionManager.productID`)
