@@ -167,15 +167,17 @@ struct AliasGroup: Identifiable {
 }
 
 enum GroupConfig {
-    /// ECSCTL_CONFIG override (set in the app's own env, e.g. by the MAS build
-    /// pointing into the sandbox container). Passed through to ecsctl too.
+    /// Config path override: ECSCTL_CONFIG env (highest) > imported CLI config
+    /// mirrored in the container (sandbox) > nil (use default ~/.ecsctl).
     static var overridePath: String? {
-        guard let p = ProcessInfo.processInfo.environment["ECSCTL_CONFIG"],
-              !p.isEmpty else { return nil }
-        return p
+        if let p = ProcessInfo.processInfo.environment["ECSCTL_CONFIG"], !p.isEmpty {
+            return p
+        }
+        return ConfigShare.shared.activePath
     }
 
     static func load() -> [AliasGroup] {
+        ConfigShare.shared.sync()
         let path = overridePath ?? NSHomeDirectory() + "/.ecsctl/config.toml"
         guard let text = try? String(contentsOfFile: path, encoding: .utf8) else { return [] }
         var groups: [AliasGroup] = []
@@ -876,14 +878,52 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
+            } else if viewMode != "groups", store.table.rows.isEmpty, store.lastUpdated != nil {
+                // First-run: refresh succeeded but no services — guide the user
+                VStack(spacing: 10) {
+                    Image(systemName: "shippingbox")
+                        .font(.system(size: 24))
+                        .foregroundColor(theme.dim)
+                    Text("no services — ecsctl has no aliases configured")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(theme.dim)
+                    if !ConfigShare.shared.isLinked {
+                        Button("Import ~/.ecsctl/config.toml…") {
+                            if ConfigShare.shared.importViaPanel() {
+                                store.groups = GroupConfig.load()
+                                store.refresh()
+                            }
+                        }
+                        Text("share your existing ecsctl CLI config with this app")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundColor(theme.dim)
+                    }
+                    if case .signedIn = sso.state {} else {
+                        Text("then sign in with AWS SSO (key icon above)")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundColor(theme.yellow)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding()
             } else if viewMode == "groups" {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         if store.groups.isEmpty {
-                            Text("~/.ecsctl/config.toml 沒有 [groups]")
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundColor(theme.dim)
-                                .padding()
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(ConfigShare.shared.isLinked
+                                     ? "shared config has no [groups]"
+                                     : "~/.ecsctl/config.toml 沒有 [groups]")
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundColor(theme.dim)
+                                Button("Import ~/.ecsctl/config.toml…") {
+                                    if ConfigShare.shared.importViaPanel() {
+                                        store.groups = GroupConfig.load()
+                                    }
+                                }
+                                .font(.system(size: 11))
+                            }
+                            .padding()
                         } else {
                             // header row（欄寬與 GroupRow 對齊）
                             HStack(spacing: 8) {

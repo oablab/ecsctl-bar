@@ -48,14 +48,39 @@ Target user: existing ecsctl CLI user with a working `~/.ecsctl/config.toml`.
 4. No CLI config? Skip import — Services view needs zero config; Groups tab shows
    an empty state ("import CLI config or create groups here").
 
+## Sandboxed prototype — VALIDATED 2026-07-25 (`build-mas.sh`)
+
+`ecsctl-bar-mas.app`: ad-hoc signed with real sandbox entitlements (sandbox fully
+enforced — container created). Full fleet table rendered under sandbox with:
+in-app SSO sign-in (Keychain-restored across builds) + bundled inherit-signed
+helper + imported config via `ECSCTL_CONFIG` → container copy.
+
+Findings:
+
+- **`ecsctl get --all` is alias-driven** — without config it returns an empty
+  list, so config import is load-bearing for the Services view too, not just
+  Groups. First-run empty state now shows the import button inline.
+- **Bundled ecsctl MUST be post-PR#54** (`ECSCTL_CONFIG` support). A pre-#54
+  binary silently ignores the env var → empty list with no error. Cut an ecsctl
+  release (v0.12.x) and bundle from the tagged artifact, not a dev build.
+- **Security-scoped bookmark creation fails under ad-hoc signing** even with
+  `com.apple.security.files.bookmarks.app-scope` (app-scoped bookmarks need a
+  stable code identity). The immediate-copy fallback in `ConfigShare` carries
+  the flow: import works, but the config is a static snapshot until re-import.
+  → RETEST bookmarks with Developer ID / MAS signing; if still failing, add a
+  "Re-import" button for config changes.
+- No sandbox denials for the child reading the container copy (inherit works
+  for container files as designed).
+- Keychain note: the sandboxed app triggers one approval prompt to reuse the
+  SSO session item created by the non-sandboxed build (different code identity).
+  Fresh installs won't see this.
+
 ## Remaining work for submission
 
-- [ ] Sandboxed build target: entitlements (`app-sandbox`, `network.client`,
-      user-selected file read), bundled ecsctl (darwin-arm64 from ecsctl release,
-      inherit-signed), MAS provisioning + signing
+- [ ] Release ecsctl v0.12.x; bundle darwin-arm64 from the tagged release
+- [ ] Real signing (Developer ID for local test, then MAS cert): retest
+      security-scoped bookmark persistence
 - [ ] Make MAS build NEVER probe external ecsctl paths (bundled only)
-- [ ] Config import flow (security-scoped bookmark + fallback sync, above)
-- [ ] Verify subprocess sandbox-extension inheritance (item 3 above)
 - [ ] Demo mode with canned fleet data — App Review can't log into AWS
 - [ ] ASC upload: reuse foldic pipeline (`~/repo/foldic/scripts/asc_jwt.py` +
       `asc_upload.py`), new app record in App Store Connect
