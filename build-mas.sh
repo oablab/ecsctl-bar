@@ -7,7 +7,10 @@ cd "$(dirname "$0")"
 
 APP="ecsctl-bar-mas.app"
 BIN="ecsctl-bar"
-ECSCTL="${ECSCTL_BIN:-$HOME/.local/bin/ecsctl}"
+# Bundled helper: darwin-arm64 from the tagged ecsctl release (reproducible).
+# Refresh with: gh release download vX.Y.Z -R oablab/ecsctl -p "ecsctl-darwin-arm64.tar.gz" -O - | tar xz -C tools/release
+# MUST be v0.12.0+ (ECSCTL_CONFIG support — older versions silently ignore it).
+ECSCTL="${ECSCTL_BIN:-tools/release/ecsctl}"
 
 [ -x "$ECSCTL" ] || { echo "ecsctl not found at $ECSCTL (set ECSCTL_BIN=)"; exit 1; }
 file "$ECSCTL" | grep -q arm64 || { echo "$ECSCTL is not arm64"; exit 1; }

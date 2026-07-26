@@ -75,16 +75,54 @@ Findings:
   SSO session item created by the non-sandboxed build (different code identity).
   Fresh installs won't see this.
 
+## Monetization — $0.99/month auto-renewable subscription (implemented 2026-07-25)
+
+- `Sources/Subscription.swift`: StoreKit 2. Product id **`dev.pahud.ecsctlbar.monthly`**.
+- Gating: only when `APP_SANDBOX_CONTAINER_ID` is present (MAS build) — source/Developer
+  ID builds are never gated. Dev bypass for prototyping:
+  `defaults write dev.pahud.ecsctl-bar devBypassPaywall -bool true`
+- Paywall (verified via screenshot 2026-07-25): feature list, Subscribe (price from
+  `product.displayPrice`), Restore Purchases, Privacy Policy (PRIVACY.md) + Apple
+  standard EULA links, auto-renew disclosure. Degrades gracefully when the ASC product
+  doesn't exist ("subscription product not found" + Retry).
+- Entitlement: `Transaction.currentEntitlements` + `Transaction.updates` listener;
+  `AppStore.sync()` on restore. ecsctl never runs while unsubscribed (store lives
+  inside the gated view).
+- Demo mode (`Sources/Demo.swift`): canned 5-service fleet, byte-compatible with
+  `ecsctl get --all` output; scale/restart/update mutate the model so App Review can
+  exercise every control without AWS. Entry: "Try Demo Fleet" button on error/empty
+  states; exit: DEMO badge in footer. Persisted via `demoMode` default.
+
+### Bundled helper — from tagged release
+
+`build-mas.sh` bundles `tools/release/ecsctl` (gitignored): darwin-arm64 from the
+tagged oablab/ecsctl release (v0.12.0+, required for ECSCTL_CONFIG). Refresh:
+`gh release download vX.Y.Z -R oablab/ecsctl -p "ecsctl-darwin-arm64.tar.gz" -O - | tar xz -C tools/release`
+The inherit-entitled helper crashes if run standalone (needs a sandboxed parent) — expected.
+
+### App Store Connect setup (manual, one-time)
+
+1. New app record: bundle id `dev.pahud.ecsctl-bar`, category Developer Tools
+   (Paid Apps agreement already Active from foldic)
+2. Subscription group → auto-renewable subscription:
+   - Product ID: `dev.pahud.ecsctlbar.monthly` (must match `SubscriptionManager.productID`)
+   - $0.99/month (Tier 1); localized display name + description
+3. App Privacy: "Data Not Collected" (matches PRIVACY.md)
+4. Review notes: "click Try Demo Fleet — no AWS account needed" + sandbox purchase test
+5. Small Business Program (15% commission) already enrolled via foldic setup
+
 ## Remaining work for submission
 
-- [ ] Release ecsctl v0.12.x; bundle darwin-arm64 from the tagged release
+- [x] Release ecsctl v0.12.0; bundle darwin-arm64 from the tagged release (done 2026-07-25)
+- [x] Demo mode with canned fleet data (done 2026-07-25)
+- [x] $0.99/mo StoreKit 2 subscription + paywall (done 2026-07-25)
+- [ ] ASC: app record + subscription product (checklist above)
 - [ ] Real signing (Developer ID for local test, then MAS cert): retest
-      security-scoped bookmark persistence
+      security-scoped bookmark persistence; sandbox-test the purchase flow
 - [ ] Make MAS build NEVER probe external ecsctl paths (bundled only)
-- [ ] Demo mode with canned fleet data — App Review can't log into AWS
+- [ ] Decide fate of devBypassPaywall before submission (hidden default; low risk)
 - [ ] ASC upload: reuse foldic pipeline (`~/repo/foldic/scripts/asc_jwt.py` +
-      `asc_upload.py`), new app record in App Store Connect
-- [ ] Review notes: explain SSO device flow + demo mode credentials
+      `asc_upload.py`)
 
 ## Review risks (acknowledged)
 

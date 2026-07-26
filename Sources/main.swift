@@ -219,6 +219,16 @@ final class EcsStore: ObservableObject {
     @Published var actionNote: String? = nil
     @Published var busyService: String? = nil
     @Published var groups: [AliasGroup] = GroupConfig.load()
+    @Published var demoMode = UserDefaults.standard.bool(forKey: "demoMode") {
+        didSet {
+            UserDefaults.standard.set(demoMode, forKey: "demoMode")
+            groups = demoMode ? DemoFleet.groups : GroupConfig.load()
+            table = Table()
+            lastUpdated = nil
+            error = nil
+            refresh()
+        }
+    }
 
     private var timer: Timer?
     static let interval: TimeInterval = 5
@@ -296,6 +306,12 @@ final class EcsStore: ObservableObject {
 
     func refresh() {
         guard !loading else { return }
+        if demoMode {
+            table = TableParser.parse(DemoFleet.render())
+            error = nil
+            lastUpdated = Date()
+            return
+        }
         loading = true
         Task.detached { [weak self] in
             let result = Self.runProcess(["get", "--all"])
@@ -317,6 +333,15 @@ final class EcsStore: ObservableObject {
     /// 執行變更類指令（scale/restart/update），完成後刷新
     func mutate(_ args: [String], on name: String, note: String) {
         guard busyService == nil else { return }
+        if demoMode {
+            DemoFleet.apply(args)
+            actionNote = "✓ \(note) (demo)"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                if self.actionNote?.hasPrefix("✓") == true { self.actionNote = nil }
+            }
+            refresh()
+            return
+        }
         busyService = name
         actionNote = "\(note) …"
         Task.detached { [weak self] in
@@ -340,6 +365,9 @@ final class EcsStore: ObservableObject {
 
     /// 抓完整 image URI（get --all 顯示的是縮短版）
     nonisolated static func fetchImageURI(for name: String) -> String? {
+        if UserDefaults.standard.bool(forKey: "demoMode") {
+            return DemoFleet.imageURI(for: name)
+        }
         guard case .success(let yaml) = runProcess(["export", name]) else { return nil }
         for line in yaml.components(separatedBy: "\n") {
             let t = line.trimmingCharacters(in: .whitespaces)
@@ -683,6 +711,7 @@ struct GroupRow: View {
 struct ContentView: View {
     @ObservedObject var store: EcsStore
     @ObservedObject private var sso = SSOManager.shared
+    @ObservedObject private var sub = SubscriptionManager.shared
     @State private var showSSO = false
     @AppStorage("themeName") private var themeName = "GitHub Dark"
     @AppStorage("fontSize") private var fontSize = 11.0
@@ -709,6 +738,20 @@ struct ContentView: View {
     }
 
     var body: some View {
+        Group {
+            if case .subscribed = sub.state {
+                mainBody
+            } else {
+                // MAS build without an active subscription: paywall.
+                // ecsctl never runs in this state (store.start() is inside mainBody).
+                PaywallView(sub: sub, theme: theme)
+                    .frame(width: 480, height: 480)
+                    .environment(\.colorScheme, theme.isDark ? .dark : .light)
+            }
+        }
+    }
+
+    private var mainBody: some View {
         VStack(spacing: 0) {
             // Header bar
             HStack(spacing: 10) {
@@ -875,6 +918,8 @@ struct ContentView: View {
                         .multilineTextAlignment(.center)
                         .textSelection(.enabled)
                     Button("重試") { store.refresh() }
+                    Button("Try Demo Fleet") { store.demoMode = true }
+                        .font(.system(size: 10))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
@@ -903,6 +948,8 @@ struct ContentView: View {
                             .font(.system(size: 9, design: .monospaced))
                             .foregroundColor(theme.yellow)
                     }
+                    Button("Try Demo Fleet") { store.demoMode = true }
+                        .font(.system(size: 10))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
@@ -993,6 +1040,16 @@ struct ContentView: View {
                         .foregroundColor(theme.yellow)
                 }
                 Spacer()
+                if store.demoMode {
+                    Button {
+                        store.demoMode = false
+                    } label: {
+                        Text("DEMO — click to exit")
+                            .foregroundColor(theme.yellow)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Showing sample data. Click to switch back to your real fleet.")
+                }
                 Text(store.autoRefresh ? "auto 5s" : "paused")
                     .foregroundColor(store.autoRefresh ? theme.green : theme.dim)
             }
