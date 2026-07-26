@@ -9,7 +9,7 @@ BIN="ecsctl-bar"
 echo "==> compiling..."
 swiftc -O -parse-as-library \
   -target arm64-apple-macosx13.0 \
-  Sources/main.swift \
+  Sources/*.swift \
   -o "$BIN"
 
 echo "==> bundling..."

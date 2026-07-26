@@ -14,8 +14,8 @@ VERSION=$(defaults read "$PWD/Info.plist" CFBundleShortVersionString)
 ZIP="ecsctl-bar-$VERSION-devid.zip"
 
 echo "==> compiling (arm64 + x86_64 universal)..."
-swiftc -O -parse-as-library -target arm64-apple-macosx13.0  Sources/main.swift -o "$BIN.arm64"
-swiftc -O -parse-as-library -target x86_64-apple-macosx13.0 Sources/main.swift -o "$BIN.x86_64"
+swiftc -O -parse-as-library -target arm64-apple-macosx13.0  Sources/*.swift -o "$BIN.arm64"
+swiftc -O -parse-as-library -target x86_64-apple-macosx13.0 Sources/*.swift -o "$BIN.x86_64"
 lipo -create "$BIN.arm64" "$BIN.x86_64" -output "$BIN"
 rm "$BIN.arm64" "$BIN.x86_64"
 

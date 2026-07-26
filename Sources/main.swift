@@ -167,8 +167,16 @@ struct AliasGroup: Identifiable {
 }
 
 enum GroupConfig {
+    /// ECSCTL_CONFIG override (set in the app's own env, e.g. by the MAS build
+    /// pointing into the sandbox container). Passed through to ecsctl too.
+    static var overridePath: String? {
+        guard let p = ProcessInfo.processInfo.environment["ECSCTL_CONFIG"],
+              !p.isEmpty else { return nil }
+        return p
+    }
+
     static func load() -> [AliasGroup] {
-        let path = NSHomeDirectory() + "/.ecsctl/config.toml"
+        let path = overridePath ?? NSHomeDirectory() + "/.ecsctl/config.toml"
         guard let text = try? String(contentsOfFile: path, encoding: .utf8) else { return [] }
         var groups: [AliasGroup] = []
         var inGroups = false
@@ -214,13 +222,17 @@ final class EcsStore: ObservableObject {
     static let interval: TimeInterval = 5
 
     nonisolated static var binary: String {
+        // MAS/sandbox: prefer an ecsctl bundled inside the app
+        let bundled = Bundle.main.bundleURL
+            .appendingPathComponent("Contents/Helpers/ecsctl").path
         let candidates = [
+            bundled,
             NSHomeDirectory() + "/.local/bin/ecsctl",
             "/usr/local/bin/ecsctl",
             "/opt/homebrew/bin/ecsctl",
         ]
         return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
-            ?? candidates[0]
+            ?? candidates[1]
     }
 
     enum RunResult {
@@ -234,6 +246,9 @@ final class EcsStore: ObservableObject {
         p.arguments = args
         var env = ProcessInfo.processInfo.environment
         env["PATH"] = "\(NSHomeDirectory())/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+        // SSO credentials (empty dict when signed out → ecsctl falls back to ~/.aws)
+        for (k, v) in CredentialBridge.shared.environment() { env[k] = v }
+        if let cfg = GroupConfig.overridePath { env["ECSCTL_CONFIG"] = cfg }
         p.environment = env
         let out = Pipe(), err = Pipe()
         p.standardOutput = out
@@ -665,6 +680,8 @@ struct GroupRow: View {
 
 struct ContentView: View {
     @ObservedObject var store: EcsStore
+    @ObservedObject private var sso = SSOManager.shared
+    @State private var showSSO = false
     @AppStorage("themeName") private var themeName = "GitHub Dark"
     @AppStorage("fontSize") private var fontSize = 11.0
     @AppStorage("viewMode") private var viewMode = "services"   // services | groups
@@ -787,6 +804,23 @@ struct ContentView: View {
                     .disabled(fontSize >= Self.fontSizeRange.upperBound)
                 }
                 .background(RoundedRectangle(cornerRadius: 6).fill(theme.toggleBg))
+
+                Button {
+                    showSSO.toggle()
+                } label: {
+                    Image(systemName: "person.badge.key")
+                        .font(.system(size: 11))
+                        .foregroundColor({
+                            if case .signedIn = sso.state { return theme.green }
+                            if case .failed = sso.state { return theme.yellow }
+                            return theme.dim
+                        }())
+                }
+                .buttonStyle(.plain)
+                .help("AWS SSO sign-in")
+                .popover(isPresented: $showSSO, arrowEdge: .bottom) {
+                    SSOPopover(sso: sso, theme: theme)
+                }
 
                 Menu {
                     ForEach(Theme.all) { t in
